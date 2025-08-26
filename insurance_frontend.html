@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HealthGuard AI - Precision Healthcare Insurance Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --info-color: #3b82f6;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+        }
+
+        .policy-info {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .policy-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .policy-item .label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .policy-item .value {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .status-bar {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.online {
+            background: #4ade80;
+        }
+
+        .status-indicator.offline {
+            background: #f87171;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .main-content {
+            display: flex;
+            height: 650px;
+        }
+
+        .sidebar {
+            width: 320px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-right: 1px solid #e9ecef;
+            overflow-y: auto;
+        }
+
+        .quick-questions {
+            margin-bottom: 30px;
+        }
+
+        .quick-questions h3 {
+            margin-bottom: 15px;
+            color: #495057;
+            font-size: 1.1em;
+        }
+
+        .quick-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+            font-size: 0.95em;
+        }
+
+        .quick-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #fafbfc;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            flex-shrink: 0;
+        }
+
+        .message.user .message-icon {
+            background: #667eea;
+            color: white;
+        }
+
+        .message.bot .message-icon {
+            background: #4ade80;
+            color: white;
+        }
+
+        .message-content {
+            flex: 1;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .message-text {
+            color: #212529;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .coverage-details {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .coverage-details h4 {
+            color: #495057;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        .coverage-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .coverage-item:last-child {
+            border-bottom: none;
+        }
+
+        .coverage-label {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+
+        .coverage-value {
+            font-weight: 600;
+            color: #212529;
+        }
+
+        .coverage-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+
+        .coverage-fill {
+            height: 100%;
+            background: var(--primary-gradient);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .message-meta {
+            margin-top: 10px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .confidence-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .confidence-high {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .confidence-medium {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .confidence-low {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .source-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            background: #e7f3ff;
+            color: #004085;
+            border-radius: 15px;
+            font-size: 0.85em;
+        }
+
+        .customer-support {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .support-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .support-text {
+            margin-bottom: 10px;
+        }
+
+        .support-number {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .support-hours {
+            font-size: 0.9em;
+            opacity: 0.95;
+        }
+
+        .call-button {
+            background: white;
+            color: #f59e0b;
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: transform 0.3s;
+        }
+
+        .call-button:hover {
+            transform: scale(1.05);
+        }
+
+        .input-area {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-field {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .send-btn {
+            padding: 15px 30px;
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: transform 0.3s;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 20px;
+            color: #6c757d;
+        }
+
+        .typing-indicator.active {
+            display: block;
+        }
+
+        .dots {
+            display: inline-flex;
+            gap: 4px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: #6c757d;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .welcome-message {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .welcome-message h2 {
+            color: #495057;
+            margin-bottom: 15px;
+        }
+
+        .policy-summary {
+            background: #f0f9ff;
+            border: 2px solid #3b82f6;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .policy-summary h3 {
+            color: #1e40af;
+            margin-bottom: 15px;
+        }
+
+        .policy-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .policy-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .policy-card-title {
+            font-size: 0.9em;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+
+        .policy-card-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #1e40af;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                border-radius: 0;
+                height: 100vh;
+            }
+            
+            .main-content {
+                flex-direction: column;
+                height: calc(100vh - 250px);
+            }
+            
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #e9ecef;
+                max-height: 200px;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>
+                <span>🏥</span>
+                <span>HealthGuard AI</span>
+            </h1>
+            <p>Precision Healthcare Insurance Assistant - Powered by Multi-Agent RAG</p>
+            
+            <div class="policy-info">
+                <div class="policy-item">
+                    <span class="label">Policy Number</span>
+                    <span class="value">HG-2025-78432</span>
+                </div>
+                <div class="policy-item">
+                    <span class="label">Plan Type</span>
+                    <span class="value">Premium Plus</span>
+                </div>
+                <div class="policy-item">
+                    <span class="label">Member Since</span>
+                    <span class="value">Jan 2023</span>
+                </div>
+                <div class="policy-item">
+                    <span class="label">Coverage Level</span>
+                    <span class="value">Family</span>
+                </div>
+            </div>
+            
+            <div class="status-bar">
+                <div class="status-item">
+                    <span class="status-indicator offline" id="ragStatus"></span>
+                    <span>RAG System</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-indicator offline" id="insuranceStatus"></span>
+                    <span>Insurance Server</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-indicator offline" id="hospitalStatus"></span>
+                    <span>Hospital Network</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-indicator online"></span>
+                    <span>24/7 Support</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="quick-questions">
+                    <h3>📋 Quick Questions</h3>
+                    <button class="quick-btn" onclick="askQuestion('What is my deductible?')">
+                        💰 Deductible & Limits
+                    </button>
+                    <button class="quick-btn" onclick="askQuestion('What preventive services are covered at 100%?')">
+                        🔍 Preventive Care
+                    </button>
+                    <button class="quick-btn" onclick="askQuestion('How much is the emergency room copay?')">
+                        🚨 Emergency Services
+                    </button>
+                    <button class="quick-btn" onclick="askQuestion('Tell me about prescription drug coverage')">
+                        💊 Prescription Drugs
+                    </button>
+                    <button class="quick-btn" onclick="askQuestion('Is dental covered?')">
+                        🦷 Dental Coverage
+                    </button>
+                    <button class="quick-btn" onclick="askQuestion('What is the difference between in-network and out-of-network?')">
+                        🏥 Network Benefits
+                    </button>
+                    <button class="quick-btn" onclick="askQuestion('How are mental health services covered?')">
+                        🧠 Mental Health
+                    </button>
+                    <button class="quick-btn" onclick="askQuestion('Tell me about maternity coverage')">
+                        👶 Maternity Care
+                    </button>
+                    <button class="quick-btn" onclick="askQuestion('What specialist services are covered?')">
+                        👨‍⚕️ Specialist Care
+                    </button>
+                    <button class="quick-btn" onclick="askQuestion('Show me my coverage summary')">
+                        📊 Coverage Summary
+                    </button>
+                </div>
+            </div>
+
+            <div class="chat-area">
+                <div class="messages" id="messagesContainer">
+                    <div class="welcome-message">
+                        <h2>Welcome to HealthGuard AI! 👋</h2>
+                        <p>Your Precision Healthcare Insurance Assistant</p>
+                        <div class="policy-summary">
+                            <h3>Your Current Coverage Overview</h3>
+                            <div class="policy-grid">
+                                <div class="policy-card">
+                                    <div class="policy-card-title">Annual Deductible</div>
+                                    <div class="policy-card-value">$1,500</div>
+                                </div>
+                                <div class="policy-card">
+                                    <div class="policy-card-title">Out-of-Pocket Max</div>
+                                    <div class="policy-card-value">$6,500</div>
+                                </div>
+                                <div class="policy-card">
+                                    <div class="policy-card-title">Preventive Care</div>
+                                    <div class="policy-card-value">100% Covered</div>
+                                </div>
+                                <div class="policy-card">
+                                    <div class="policy-card-title">Network Hospitals</div>
+                                    <div class="policy-card-value">2,500+</div>
+                                </div>
+                            </div>
+                        </div>
+                        <p style="margin-top: 20px;">Ask me anything about your benefits, or choose a quick question from the sidebar.</p>
+                    </div>
+                </div>
+
+                <div class="typing-indicator" id="typingIndicator">
+                    <span>AI is analyzing your policy</span>
+                    <span class="dots">
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                    </span>
+                </div>
+
+                <div class="input-area">
+                    <div class="input-container">
+                        <input 
+                            type="text" 
+                            class="input-field" 
+                            id="queryInput" 
+                            placeholder="Ask about your insurance coverage, claims, or benefits..."
+                            onkeypress="handleKeyPress(event)"
+                        />
+                        <button class="send-btn" id="sendBtn" onclick="sendQuery()">
+                            Send 📤
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const RAG_SERVER = 'http://localhost:8005';
+        const INSURANCE_SERVER = 'http://localhost:8004';
+        const HOSPITAL_SERVER = 'http://localhost:8003';
+
+        // Check server status
+        async function checkServerStatus() {
+            console.log('Checking server status...');
+            
+            // Check RAG Server
+            try {
+                const response = await fetch(`${RAG_SERVER}/health`);
+                if (response.ok) {
+                    document.getElementById('ragStatus').classList.add('online');
+                    document.getElementById('ragStatus').classList.remove('offline');
+                    console.log('✅ RAG Server online');
+                }
+            } catch (e) {
+                console.error('❌ RAG server offline:', e);
+                document.getElementById('ragStatus').classList.remove('online');
+                document.getElementById('ragStatus').classList.add('offline');
+            }
+
+            // Check Insurance Server
+            try {
+                const response = await fetch(`${INSURANCE_SERVER}/health`);
+                if (response.ok) {
+                    document.getElementById('insuranceStatus').classList.add('online');
+                    document.getElementById('insuranceStatus').classList.remove('offline');
+                    console.log('✅ Insurance Server online');
+                }
+            } catch (e) {
+                console.error('❌ Insurance server offline:', e);
+                document.getElementById('insuranceStatus').classList.remove('online');
+                document.getElementById('insuranceStatus').classList.add('offline');
+            }
+
+            // Check Hospital Server
+            try {
+                const response = await fetch(`${HOSPITAL_SERVER}/health`);
+                if (response.ok) {
+                    document.getElementById('hospitalStatus').classList.add('online');
+                    document.getElementById('hospitalStatus').classList.remove('offline');
+                    console.log('✅ Hospital Server online');
+                }
+            } catch (e) {
+                console.error('❌ Hospital server offline:', e);
+                document.getElementById('hospitalStatus').classList.remove('online');
+                document.getElementById('hospitalStatus').classList.add('offline');
+            }
+        }
+
+        // Get coverage details based on query
+        function getCoverageDetails(query) {
+            const queryLower = query.toLowerCase();
+            let relevantCoverage = {};
+
+            if (queryLower.includes('deductible')) {
+                relevantCoverage = {
+                    "Individual Deductible": "$1,500",
+                    "Family Deductible": "$3,000",
+                    "Deductible Met": "$450 (30%)",
+                    "Remaining": "$1,050"
+                };
+            } else if (queryLower.includes('preventive')) {
+                relevantCoverage = {
+                    "Annual Physical": "100% Covered",
+                    "Vaccinations": "100% Covered",
+                    "Cancer Screenings": "100% Covered",
+                    "Well-Child Visits": "100% Covered"
+                };
+            } else if (queryLower.includes('emergency')) {
+                relevantCoverage = {
+                    "ER Visit Copay": "$250",
+                    "Coverage After Deductible": "80%",
+                    "Ambulance": "80% after deductible",
+                    "Urgent Care": "$50 copay"
+                };
+            } else if (queryLower.includes('prescription') || queryLower.includes('drug')) {
+                relevantCoverage = {
+                    "Generic Drugs": "$10 copay (90% coverage)",
+                    "Preferred Brand": "$35 copay (70% coverage)",
+                    "Non-Preferred": "$75 copay (50% coverage)",
+                    "Specialty Drugs": "25% coinsurance"
+                };
+            } else if (queryLower.includes('dental')) {
+                relevantCoverage = {
+                    "Basic Dental": "Not Covered",
+                    "Dental Plan Option": "Available for $25/month",
+                    "Emergency Dental": "Limited coverage",
+                    "Recommendation": "Consider separate dental plan"
+                };
+            } else if (queryLower.includes('mental health')) {
+                relevantCoverage = {
+                    "Outpatient Therapy": "$30 copay",
+                    "Coverage Level": "80% after deductible",
+                    "Annual Sessions": "50 covered sessions",
+                    "Teletherapy": "Same as in-person"
+                };
+            } else if (queryLower.includes('maternity')) {
+                relevantCoverage = {
+                    "Prenatal Care": "100% Covered",
+                    "Delivery & Hospital": "80% after deductible",
+                    "Postnatal Care": "100% for 6 weeks",
+                    "Estimated Cost": "$3,000-$4,000 out-of-pocket"
+                };
+            } else if (queryLower.includes('network')) {
+                relevantCoverage = {
+                    "In-Network Coverage": "80% after deductible",
+                    "Out-of-Network": "60% after $3,000 deductible",
+                    "Network Size": "2,547 hospitals, 45,000 doctors",
+                    "Find Providers": "Use mobile app or website"
+                };
+            } else if (queryLower.includes('specialist')) {
+                relevantCoverage = {
+                    "Specialist Copay": "$40 with referral",
+                    "Coverage Level": "80% after deductible",
+                    "Referral Required": "Yes, from PCP",
+                    "Second Opinions": "Covered at same rate"
+                };
+            } else if (queryLower.includes('summary') || queryLower.includes('coverage')) {
+                relevantCoverage = {
+                    "Plan Type": "Premium Plus Family",
+                    "Deductible Status": "$450/$1,500 (30%)",
+                    "Out-of-Pocket": "$2,100/$6,500 (32%)",
+                    "Network Access": "Full PPO Network"
+                };
+            }
+
+            return relevantCoverage;
+        }
+
+        // Add message to chat
+        function addMessage(text, isUser, metadata = {}) {
+            const messagesContainer = document.getElementById('messagesContainer');
+            
+            // Remove welcome message if it exists
+            const welcomeMsg = messagesContainer.querySelector('.welcome-message');
+            if (welcomeMsg) {
+                welcomeMsg.remove();
+            }
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+            
+            const icon = isUser ? '👤' : '🤖';
+            const confidence = metadata.confidence || 0;
+            const sources = metadata.sources || [];
+            const coverageDetails = metadata.coverageDetails || {};
+            
+            let confidenceClass = 'confidence-low';
+            if (confidence > 0.8) confidenceClass = 'confidence-high';
+            else if (confidence > 0.5) confidenceClass = 'confidence-medium';
+            
+            // Build coverage details HTML
+            let coverageHTML = '';
+            if (Object.keys(coverageDetails).length > 0) {
+                coverageHTML = `
+                    <div class="coverage-details">
+                        <h4>📊 Policy Coverage Details</h4>
+                        ${Object.entries(coverageDetails).map(([key, value]) => {
+                            // Calculate coverage percentage for visual bar
+                            let percentage = 50; // Default
+                            const valueStr = String(value);
+                            
+                            if (valueStr.includes('100%')) {
+                                percentage = 100;
+                            } else if (valueStr.includes('90%')) {
+                                percentage = 90;
+                            } else if (valueStr.includes('80%')) {
+                                percentage = 80;
+                            } else if (valueStr.includes('70%')) {
+                                percentage = 70;
+                            } else if (valueStr.includes('60%')) {
+                                percentage = 60;
+                            } else if (valueStr.includes('50%')) {
+                                percentage = 50;
+                            } else if (valueStr.includes('Not Covered')) {
+                                percentage = 0;
+                            } else {
+                                // Try to extract any percentage
+                                const match = valueStr.match(/(\d+)%/);
+                                if (match) {
+                                    percentage = parseInt(match[1]);
+                                }
+                            }
+                            
+                            return `
+                                <div class="coverage-item">
+                                    <div style="flex: 1;">
+                                        <div class="coverage-label">${key}</div>
+                                        <div class="coverage-value">${value}</div>
+                                        <div class="coverage-bar">
+                                            <div class="coverage-fill" style="width: ${percentage}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+            }
+            
+            // Build metadata HTML
+            let metaHtml = '';
+            if (!isUser) {
+                if (confidence < 0.4) {
+                    // Low confidence - show customer support option
+                    metaHtml = `
+                        <div class="customer-support">
+                            <div class="support-icon">📞</div>
+                            <div class="support-text">Need more assistance? Our experts are here to help!</div>
+                            <div class="support-number">1-800-HEALTH-AI</div>
+                            <div class="support-hours">Available 24/7 • Average wait time: 2 minutes</div>
+                            <button class="call-button" onclick="alert('Connecting to customer support...')">
+                                Call Now for Personal Assistance
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    metaHtml = `
+                        <div class="message-meta">
+                            <span class="confidence-badge ${confidenceClass}">
+                                📊 ${Math.round(confidence * 100)}% Confidence
+                            </span>
+                            ${sources.length > 0 ? `
+                                <span class="source-badge">
+                                    📚 ${sources[0]}
+                                </span>
+                            ` : ''}
+                        </div>
+                    `;
+                }
+            }
+            
+            messageDiv.innerHTML = `
+                <div class="message-icon">${icon}</div>
+                <div class="message-content">
+                    <div class="message-text">${text}</div>
+                    ${coverageHTML}
+                    ${metaHtml}
+                </div>
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Send query to RAG server
+        async function sendQuery() {
+            const input = document.getElementById('queryInput');
+            const query = input.value.trim();
+            
+            if (!query) return;
+            
+            console.log('Sending query:', query);
+            
+            // Disable input
+            input.disabled = true;
+            document.getElementById('sendBtn').disabled = true;
+            
+            // Add user message
+            addMessage(query, true);
+            
+            // Clear input
+            input.value = '';
+            
+            // Show typing indicator
+            document.getElementById('typingIndicator').classList.add('active');
+            
+            try {
+                const response = await fetch(`${RAG_SERVER}/api/v1/rag/query`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ query: query })
+                });
+                
+                console.log('Response status:', response.status);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Response data:', data);
+                    
+                    // Get relevant coverage details for this query
+                    const coverageDetails = getCoverageDetails(query);
+                    
+                    // Check if customer service is recommended
+                    const metadata = {
+                        confidence: data.confidence || 0.5,
+                        sources: data.sources || ['Insurance Policy Handbook'],
+                        coverageDetails: coverageDetails
+                    };
+                    
+                    // If backend recommends customer service, ensure it's shown
+                    if (data.customer_service) {
+                        metadata.confidence = Math.min(data.confidence, 0.35); // Ensure CS widget shows
+                        metadata.customerService = data.customer_service;
+                    }
+                    
+                    addMessage(
+                        data.response || 'I received your question but could not generate a proper response. Please try again.',
+                        false,
+                        metadata
+                    );
+                } else {
+                    const errorText = await response.text();
+                    console.error('Server error:', errorText);
+                    addMessage(
+                        'I encountered an error processing your question. Please try again or contact our 24/7 support.',
+                        false,
+                        {
+                            confidence: 0.3
+                        }
+                    );
+                }
+            } catch (error) {
+                console.error('Network error:', error);
+                addMessage(
+                    `Connection error: Unable to reach the RAG server. Please ensure it's running on port 8005. Error: ${error.message}`,
+                    false,
+                    {
+                        confidence: 0.2
+                    }
+                );
+            } finally {
+                // Hide typing indicator
+                document.getElementById('typingIndicator').classList.remove('active');
+                
+                // Re-enable input
+                input.disabled = false;
+                document.getElementById('sendBtn').disabled = false;
+                input.focus();
+            }
+        }
+
+        // Handle enter key
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                sendQuery();
+            }
+        }
+
+        // Quick question handler
+        function askQuestion(question) {
+            document.getElementById('queryInput').value = question;
+            sendQuery();
+        }
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            console.log('HealthGuard AI Frontend Loaded');
+            console.log('Checking server connections...');
+            checkServerStatus();
+            
+            // Check server status every 30 seconds
+            setInterval(checkServerStatus, 30000);
+            
+            // Focus on input
+            document.getElementById('queryInput').focus();
+            
+            // Log configuration
+            console.log('Configuration:');
+            console.log('- RAG Server:', RAG_SERVER);
+            console.log('- Insurance Server:', INSURANCE_SERVER);
+            console.log('- Hospital Server:', HOSPITAL_SERVER);
+        });
+    </script>
+</body>
+</html>
