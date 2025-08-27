@@ -6,6 +6,6 @@ services:
     startCommand: python launch_system.py
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11.0
+        value: 3.10.13
     healthCheckPath: /health
     autoDeploy: true
