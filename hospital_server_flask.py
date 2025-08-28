@@ -5,35 +5,25 @@ from datetime import datetime
 import os
 
 app = Flask(__name__)
+CORS(app, origins="*")
 
-# Fixed CORS configuration
-CORS(app, 
-     resources={r"/*": {"origins": "*"}},
-     allow_headers=["Content-Type", "Accept", "Authorization"],
-     methods=["GET", "POST", "OPTIONS", "PUT", "DELETE"],
-     supports_credentials=False)
+PORT = int(os.environ.get('PORT', 8003))
 
-@app.before_request
-def handle_preflight():
-    if request.method == "OPTIONS":
-        response = jsonify({'status': 'ok'})
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        response.headers.add('Access-Control-Allow-Headers', "*")
-        response.headers.add('Access-Control-Allow-Methods', "*")
-        return response, 200
-
-@app.route('/health', methods=['GET', 'OPTIONS'])
+@app.route('/health', methods=['GET'])
 def health():
     return jsonify({"status": "healthy", "service": "hospital"})
 
-@app.route('/api/v1/patients/register', methods=['POST', 'OPTIONS'])
+@app.route('/api/v1/patients/register', methods=['POST'])
 def register_patient():
     return jsonify({"id": str(uuid.uuid4()), "status": "registered"})
 
-@app.route('/api/v1/patients', methods=['GET', 'OPTIONS'])
+@app.route('/api/v1/patients', methods=['GET'])
 def get_patients():
     return jsonify([])
 
+@app.route('/', methods=['GET'])
+def index():
+    return jsonify({"service": "Hospital Server", "port": PORT})
+
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 8003))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=PORT)

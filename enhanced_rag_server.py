@@ -12,7 +12,7 @@ import re
 import os
 
 app = Flask(__name__)
-CORS(app, origins="*", allow_headers=["Content-Type"], methods=["GET", "POST", "OPTIONS"])
+CORS(app, origins="*")
 
 # Configuration
 PORT = int(os.environ.get('PORT', 8005))
