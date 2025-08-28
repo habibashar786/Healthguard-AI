@@ -9,11 +9,19 @@ from flask_cors import CORS
 from datetime import datetime
 import json
 import random
+import os
 
 app = Flask(__name__)
-CORS(app, origins="*")
 
-PORT = 8004
+# Fixed CORS configuration to handle preflight requests properly
+CORS(app, 
+     resources={r"/*": {"origins": "*"}},
+     allow_headers=["Content-Type", "Accept", "Authorization"],
+     methods=["GET", "POST", "OPTIONS", "PUT", "DELETE"],
+     supports_credentials=False,
+     max_age=3600)
+
+PORT = int(os.environ.get('PORT', 8004))
 HOST = '0.0.0.0'
 
 # In-memory storage
@@ -21,9 +29,31 @@ policies = {}
 claims = {}
 assessments = {}
 
-@app.route('/health', methods=['GET'])
+# Add OPTIONS handler for all routes
+@app.before_request
+def handle_preflight():
+    if request.method == "OPTIONS":
+        response = jsonify({'status': 'ok'})
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add('Access-Control-Allow-Headers', "*")
+        response.headers.add('Access-Control-Allow-Methods', "*")
+        return response, 200
+
+@app.after_request
+def after_request(response):
+    # Ensure CORS headers are always present
+    origin = request.headers.get('Origin', '*')
+    response.headers.add('Access-Control-Allow-Origin', origin if origin else '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Accept,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS,PUT,DELETE')
+    return response
+
+@app.route('/health', methods=['GET', 'OPTIONS'])
 def health_check():
     """Health check endpoint"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
     return jsonify({
         "status": "healthy",
         "server": "insurance",
@@ -35,18 +65,24 @@ def health_check():
         "assessments_count": len(assessments)
     })
 
-@app.route('/api/v1/policies', methods=['GET'])
+@app.route('/api/v1/policies', methods=['GET', 'OPTIONS'])
 def get_policies():
     """Get all policies"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
     return jsonify({
         "status": "success",
         "count": len(policies),
         "data": list(policies.values())
     })
 
-@app.route('/api/v1/policies', methods=['POST'])
+@app.route('/api/v1/policies', methods=['POST', 'OPTIONS'])
 def create_policy():
     """Create new policy"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
     data = request.json
     policy_id = f"POL-{random.randint(100000, 999999)}"
     
@@ -76,9 +112,12 @@ def create_policy():
         "data": policy
     })
 
-@app.route('/api/v1/claims/assess', methods=['POST'])
+@app.route('/api/v1/claims/assess', methods=['POST', 'OPTIONS'])
 def assess_claim():
     """Assess insurance claim"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
     data = request.json
     assessment_id = f"ASS-{random.randint(100000, 999999)}"
     
@@ -106,9 +145,12 @@ def assess_claim():
         "data": assessment
     })
 
-@app.route('/api/v1/coverage', methods=['POST'])
+@app.route('/api/v1/coverage', methods=['POST', 'OPTIONS'])
 def check_coverage():
     """Check coverage for a specific service"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
     data = request.json
     service = data.get("service", "").lower()
     
@@ -130,9 +172,12 @@ def check_coverage():
         "deductible_applies": coverage < 100
     })
 
-@app.route('/')
+@app.route('/', methods=['GET', 'OPTIONS'])
 def index():
     """Root endpoint"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
     return jsonify({
         "service": "Insurance Server",
         "version": "1.0.0",
@@ -151,4 +196,6 @@ if __name__ == '__main__':
     print("="*60)
     print(f"Starting on http://localhost:{PORT}")
     print("="*60)
-    app.run(host=HOST, port=PORT, debug=True)
+    # Use debug=False for production
+    debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
+    app.run(host=HOST, port=PORT, debug=debug_mode)
