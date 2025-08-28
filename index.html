@@ -515,6 +515,15 @@
             color: #1e40af;
         }
 
+        .server-info {
+            background: #f0f9ff;
+            border: 1px solid #3b82f6;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px;
+            font-size: 0.9em;
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .container {
@@ -624,6 +633,11 @@
                         📊 Coverage Summary
                     </button>
                 </div>
+                
+                <div class="server-info" id="serverInfo" style="display: none;">
+                    <strong>Debug Info:</strong>
+                    <div id="debugInfo"></div>
+                </div>
             </div>
 
             <div class="chat-area">
@@ -684,15 +698,31 @@
     </div>
 
     <script>
-        // Dynamic Configuration - Automatically detects local vs production environment
-        const isLocal = window.location.hostname === 'localhost' || 
-                       window.location.hostname === '127.0.0.1' ||
-                       window.location.hostname === '';
-
-        // You can override this by setting a URL parameter: ?env=local or ?env=production
+        // Environment Detection - Fixed for GitHub Pages
+        const hostname = window.location.hostname.toLowerCase();
+        const pathname = window.location.pathname.toLowerCase();
+        
+        // Check if we're on GitHub Pages or any deployed environment
+        const isGitHubPages = hostname.includes('github.io');
+        const isRenderDeployment = hostname.includes('onrender.com');
+        const isNetlify = hostname.includes('netlify.app') || hostname.includes('netlify.com');
+        const isVercel = hostname.includes('vercel.app');
+        const isLocalHost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '';
+        
+        // URL parameter override
         const urlParams = new URLSearchParams(window.location.search);
         const forceEnv = urlParams.get('env');
-        const useLocalServers = forceEnv === 'local' || (forceEnv !== 'production' && isLocal);
+        
+        // Determine environment
+        let useLocalServers;
+        if (forceEnv === 'local') {
+            useLocalServers = true;
+        } else if (forceEnv === 'production') {
+            useLocalServers = false;
+        } else {
+            // Auto-detect: Use production servers for any deployed environment
+            useLocalServers = isLocalHost && !isGitHubPages && !isRenderDeployment && !isNetlify && !isVercel;
+        }
 
         // Server Configuration
         const SERVERS = {
@@ -703,9 +733,8 @@
             },
             production: {
                 RAG_SERVER: 'https://healthguard-ai-mzhl.onrender.com',
-                // TODO: Deploy these to Render and update URLs
-                INSURANCE_SERVER: 'https://healthguard-insurance.onrender.com',  // Update after deployment
-                HOSPITAL_SERVER: 'https://healthguard-hospital.onrender.com'     // Update after deployment
+                INSURANCE_SERVER: 'https://healthguard-insurance.onrender.com',
+                HOSPITAL_SERVER: 'https://healthguard-hospital.onrender.com'
             }
         };
 
@@ -718,6 +747,9 @@
         // Display environment info
         function updateEnvironmentBadge() {
             const badge = document.getElementById('environmentBadge');
+            const debugDiv = document.getElementById('debugInfo');
+            const serverInfoDiv = document.getElementById('serverInfo');
+            
             if (useLocalServers) {
                 badge.textContent = '🖥️ Local Development Mode';
                 badge.style.background = 'rgba(251, 191, 36, 0.3)';
@@ -726,11 +758,31 @@
                 badge.style.background = 'rgba(74, 222, 128, 0.3)';
             }
             
-            console.log('Environment Configuration:');
+            // Show debug info in development or with debug parameter
+            if (urlParams.get('debug') === 'true') {
+                serverInfoDiv.style.display = 'block';
+                debugDiv.innerHTML = `
+                    <small>
+                    Hostname: ${hostname}<br>
+                    GitHub Pages: ${isGitHubPages}<br>
+                    Local: ${isLocalHost}<br>
+                    Using: ${useLocalServers ? 'LOCAL' : 'PRODUCTION'}<br>
+                    RAG: ${RAG_SERVER}<br>
+                    </small>
+                `;
+            }
+            
+            console.log('=== Environment Configuration ===');
+            console.log('Hostname:', hostname);
+            console.log('Is GitHub Pages:', isGitHubPages);
+            console.log('Is LocalHost:', isLocalHost);
+            console.log('Force Environment:', forceEnv);
             console.log(`Mode: ${useLocalServers ? 'LOCAL' : 'PRODUCTION'}`);
+            console.log('Servers:');
             console.log('- RAG Server:', RAG_SERVER);
             console.log('- Insurance Server:', INSURANCE_SERVER);
             console.log('- Hospital Server:', HOSPITAL_SERVER);
+            console.log('================================');
         }
 
         // Check server status
@@ -739,54 +791,90 @@
             
             // Check RAG Server
             try {
-                const response = await fetch(`${RAG_SERVER}/health`);
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
+                const response = await fetch(`${RAG_SERVER}/health`, {
+                    signal: controller.signal,
+                    mode: 'cors',
+                    headers: {
+                        'Accept': 'application/json',
+                    }
+                });
+                
+                clearTimeout(timeoutId);
+                
                 if (response.ok) {
                     document.getElementById('ragStatus').classList.add('online');
                     document.getElementById('ragStatus').classList.remove('offline');
                     console.log('✅ RAG Server online');
+                } else {
+                    throw new Error(`Status ${response.status}`);
                 }
             } catch (e) {
                 console.error('❌ RAG server offline:', e.message);
                 document.getElementById('ragStatus').classList.remove('online');
                 document.getElementById('ragStatus').classList.add('offline');
+                
+                if (!useLocalServers && e.message.includes('aborted')) {
+                    console.warn('RAG server might be sleeping (Render free tier). It will wake up on first use.');
+                }
             }
 
             // Check Insurance Server
             try {
-                const response = await fetch(`${INSURANCE_SERVER}/health`);
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
+                const response = await fetch(`${INSURANCE_SERVER}/health`, {
+                    signal: controller.signal,
+                    mode: 'cors',
+                    headers: {
+                        'Accept': 'application/json',
+                    }
+                });
+                
+                clearTimeout(timeoutId);
+                
                 if (response.ok) {
                     document.getElementById('insuranceStatus').classList.add('online');
                     document.getElementById('insuranceStatus').classList.remove('offline');
                     console.log('✅ Insurance Server online');
+                } else {
+                    throw new Error(`Status ${response.status}`);
                 }
             } catch (e) {
                 console.error('❌ Insurance server offline:', e.message);
                 document.getElementById('insuranceStatus').classList.remove('online');
                 document.getElementById('insuranceStatus').classList.add('offline');
-                
-                // Show warning if in production mode and servers aren't deployed
-                if (!useLocalServers && INSURANCE_SERVER.includes('onrender.com')) {
-                    console.warn('⚠️ Insurance server not yet deployed to production. Using placeholder URL.');
-                }
             }
 
             // Check Hospital Server
             try {
-                const response = await fetch(`${HOSPITAL_SERVER}/health`);
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
+                const response = await fetch(`${HOSPITAL_SERVER}/health`, {
+                    signal: controller.signal,
+                    mode: 'cors',
+                    headers: {
+                        'Accept': 'application/json',
+                    }
+                });
+                
+                clearTimeout(timeoutId);
+                
                 if (response.ok) {
                     document.getElementById('hospitalStatus').classList.add('online');
                     document.getElementById('hospitalStatus').classList.remove('offline');
                     console.log('✅ Hospital Server online');
+                } else {
+                    throw new Error(`Status ${response.status}`);
                 }
             } catch (e) {
                 console.error('❌ Hospital server offline:', e.message);
                 document.getElementById('hospitalStatus').classList.remove('online');
                 document.getElementById('hospitalStatus').classList.add('offline');
-                
-                // Show warning if in production mode and servers aren't deployed
-                if (!useLocalServers && HOSPITAL_SERVER.includes('onrender.com')) {
-                    console.warn('⚠️ Hospital server not yet deployed to production. Using placeholder URL.');
-                }
             }
         }
 
@@ -993,7 +1081,8 @@
             
             if (!query) return;
             
-            console.log('Sending query:', query);
+            console.log('Sending query to:', RAG_SERVER);
+            console.log('Query:', query);
             
             // Disable input
             input.disabled = true;
@@ -1009,13 +1098,21 @@
             document.getElementById('typingIndicator').classList.add('active');
             
             try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+                
                 const response = await fetch(`${RAG_SERVER}/api/v1/rag/query`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json',
                     },
-                    body: JSON.stringify({ query: query })
+                    body: JSON.stringify({ query: query }),
+                    signal: controller.signal,
+                    mode: 'cors'
                 });
+                
+                clearTimeout(timeoutId);
                 
                 console.log('Response status:', response.status);
                 
@@ -1057,10 +1154,16 @@
                 }
             } catch (error) {
                 console.error('Network error:', error);
-                const errorMessage = useLocalServers 
-                    ? `Connection error: Unable to reach the local RAG server. Please ensure it's running on port 8005. Error: ${error.message}`
-                    : `Connection error: Unable to reach the RAG server. The service may be starting up or experiencing issues. Error: ${error.message}`;
-                    
+                let errorMessage = '';
+                
+                if (error.name === 'AbortError') {
+                    errorMessage = 'Request timed out. The server might be waking up (Render free tier). Please try again in a moment.';
+                } else if (useLocalServers) {
+                    errorMessage = `Connection error: Unable to reach the local RAG server. Please ensure it's running on port 8005. Error: ${error.message}`;
+                } else {
+                    errorMessage = `Connection error: The RAG server may be starting up (free tier servers sleep after inactivity). Please wait a moment and try again. Error: ${error.message}`;
+                }
+                
                 addMessage(
                     errorMessage,
                     false,
@@ -1068,6 +1171,14 @@
                         confidence: 0.2
                     }
                 );
+                
+                // If in production and server might be sleeping, retry once after delay
+                if (!useLocalServers && error.message.includes('Failed to fetch')) {
+                    console.log('Server might be sleeping, will retry in 5 seconds...');
+                    setTimeout(() => {
+                        checkServerStatus();
+                    }, 5000);
+                }
             } finally {
                 // Hide typing indicator
                 document.getElementById('typingIndicator').classList.remove('active');
@@ -1095,6 +1206,7 @@
         // Initialize on load
         window.addEventListener('load', () => {
             console.log('HealthGuard AI Frontend Loaded');
+            console.log('URL:', window.location.href);
             
             // Update environment badge
             updateEnvironmentBadge();
@@ -1109,10 +1221,12 @@
             // Focus on input
             document.getElementById('queryInput').focus();
             
-            // Add tip for switching environments
-            console.log('💡 TIP: You can force environment by adding URL parameters:');
-            console.log('   - For local: ?env=local');
-            console.log('   - For production: ?env=production');
+            // Add tips
+            console.log('💡 TIPS:');
+            console.log('1. Force environment: Add ?env=local or ?env=production to URL');
+            console.log('2. Show debug info: Add ?debug=true to URL');
+            console.log('3. If servers are offline in production, they may be sleeping (free tier)');
+            console.log('4. First request to sleeping server takes 30-60 seconds to wake up');
         });
     </script>
 </body>
